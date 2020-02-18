@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import os
 import re
 from IPython import display
-
+import shutil
 
 
 def DNIs_in_string(string):
@@ -53,21 +53,45 @@ def DNIs_in_string(string):
     return DNIs
 
 if __name__ == '__main__':
+    
+    #INPUT
+    name_file = 'dni_text.txt'
+    
+    os.chdir(r'C:\Users\aralvarez\Desktop')
+    
+    shutil.copy(name_file, 'duplicate.txt')
+    name_file = 'duplicate.txt'
+    #Maximum number of comma in dataframe 20
+    def line_prepender(filename, line):
+        with open(filename, 'r+') as f:
+            content = f.read()
+            f.seek(0, 0)
+            f.write(line.rstrip('\r\n') + '\n' + content)
+    line_prepender(name_file, '0 ,0 , , , , , , , , , , , , , , ,')
+    
 
+    #LOAD DATA
+    dataframe = pd.read_csv(name_file, encoding = "ISO-8859-1", header = None)
     
-    os.chdir(r'C:\Users\aramos\Desktop')
+    os.remove(name_file)
     
-    dataframe = pd.read_csv('dni_text.txt', encoding = "ISO-8859-1", header = None)
+    dataframe = dataframe.drop(0, axis = 0)
     dataframe = dataframe.fillna('')
-    dataframe[2] = dataframe[2]+ dataframe[3]
+
+    #DataFrame should have 3 columns the last one with a string
+    for i in range(3, dataframe.keys().size):
+        dataframe[2] = dataframe[2]+ dataframe[i]
+        
     dataframe= dataframe[[0,1,2]]
-    
+    dataframe[2] = dataframe[2].apply(str)
+
     MASK = (dataframe[0] == 1) & (dataframe[1] > 0)
     dataframe = dataframe[MASK]
-    dataframe[2] = dataframe[2].apply(str)
+    
     dataframe[2] = dataframe[2].apply(DNIs_in_string)
     output_dataframe = pd.DataFrame()
-    output_dataframe['ROW'] = dataframe.index +1 
+    output_dataframe['ROW'] = dataframe.index 
     output_dataframe['DNIs found'] = list(dataframe[2])
     print('OUTPUT DATAFRAME:\n ==============')
     display.display(output_dataframe)
+    output_dataframe.to_csv('output_dni.csv', index = False)
